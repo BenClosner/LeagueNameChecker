@@ -52,7 +52,7 @@ class api:
 		return datetime.datetime.fromtimestamp(int(epoch/1000))						              #takes the epoch value in miliseconds, converts to seconds, and is structured into a years, month week... format
 															      #the date returned is in UTC
 	def text_output(self, name):
-		if any(not x.isalnum() for x in name) or len(name) == 1:							#filters out names with characters not alphanumeric
+		if any( not (x.isalnum() or x == ' ') for x in name) or len(name) == 1:							#filters out names with characters not alphanumeric
 			print(str(name) + " is not a valid name")
 			return
 		summoner_info = self._summoner_id_from_name(name)
@@ -79,7 +79,8 @@ def main():
 	a = api(MY_KEY)
 	a.text_output('javafreak')
 	a.text_output('...')
-	a.text_output('abc')
+	a.text_output('umbrae atrae')
+	
 	
 
 if __name__ == '__main__':
