@@ -53,7 +53,7 @@ class api:
 															      #the date returned is in UTC
 	def text_output(self, name):
 		if any(not x.isalnum() for x in name) or len(name) == 1:							#filters out names with characters not alphanumeric
-			print("not a valid name")
+			print(str(name) + " is not a valid name")
 			return
 		summoner_info = self._summoner_id_from_name(name)
 		if not summoner_info:												#filteres out names never created before
