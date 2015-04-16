@@ -31,7 +31,7 @@ class api:
 		self.region = region											
 
 	def _summoner_id_from_name(self, name):	
-		formatted_name = name.replace(' ', r'%20')							                              		#replaces the spaces in the name with needed symbols 
+		formatted_name = name.replace(' ', r'%20')							                #replaces the spaces in the name with needed symbols 
 		summoner_id_api = r'api/lol/{region}/v1.4/summoner/by-name/{summonerNames}'			      		#this is the part of the API that contains basic summoner info
 		url = (BASE_URL + summoner_id_api + self.api_key).format(region = self.region, summonerNames = formatted_name)	#the url is combined
 		
@@ -52,16 +52,26 @@ class api:
 		return datetime.datetime.fromtimestamp(int(epoch/1000))						              #takes the epoch value in miliseconds, converts to seconds, and is structured into a years, month week... format
 															      #the date returned is in UTC
 	def text_output(self, name):
-		if any( not (x.isalnum() or x == ' ') for x in name) or len(name) == 1:							#filters out names with characters not alphanumeric
+		if any( not (x.isalnum() or x == ' ') for x in name) or len(name) == 1:						#filters out names with characters not alphanumeric
 			print(str(name) + " is not a valid name")
 			return
+			
 		summoner_info = self._summoner_id_from_name(name)
 		if not summoner_info:												#filteres out names never created before
 			print("The name " + str(name) + " is not in use")
 			return
+			
 		latest_game_date = self._most_recent_game(summoner_info['id'])
 		account_expires_date_offset = 6 if summoner_info['summonerLevel'] < 7 else summoner_info['summonerLevel']
-		account_expires_date = latest_game_date.replace(month = (latest_game_date.month + account_expires_date_offset) % 12, year = latest_game_date.year + (latest_game_date.month + account_expires_date_offset)//12)
+		newmonth = (latest_game_date.month + account_expires_date_offset) % 12 or 12
+		newyear = (latest_game_date.month + account_expires_date_offset - 1) // 12 + latest_game_date.year
+		
+		try:
+			account_expires_date = latest_game_date.replace(month = newmonth, year = newyear)
+		except ValueError:
+			account_expires_date = latest_game_date.replace(day = 1, month = newmonth, year = newyear)
+			print('testing')
+		
 		if account_expires_date < datetime.datetime.utcnow():
 			print(str(summoner_info['name']) + " is available or unuseable")					#filters any name that has been created and is available now
 			return
@@ -70,18 +80,30 @@ class api:
 		print(" expires on " + account_expires_date.strftime('%m/%d/%y'))						#prints when the name will be availalbe
 		#print(" The current time in UTC is " + str(datetime.datetime.utcnow()))
 		#print(" This summoners most recent game was on (UTC) " + str(latest_game_date))
-		return
-
-
-
+		return (str(summoner_info['name']) + " (lvl " + str(summoner_info['summonerLevel']) + ") expires on " + account_expires_date.strftime('%m/%d/%y'))
 
 def main():
 	a = api(MY_KEY)
-	a.text_output('javafreak')
-	a.text_output('...')
-	a.text_output('umbrae atrae')
+	a.text_output('gyrados')
+	a.text_output('javafreak')  	
+	a.text_output('...')	  	#name with illegal chars
+	a.text_output('umbrae atrae')	#name with space
+	a.text_output('aaaaabbbb bcccccccc')	#name not yet created
+
 	
+def pokemans():
+	import time
+	a = api()
 	
+	outfile = open('Pokemon Availability.txt', 'w+')
+	with open('ListOfPokemon.txt', 'r') as file:
+		for line in file.readlines():
+			poke = a.text_output(line.replace('\n',''))
+			if poke:	
+				outfile.write(poke + '\n')
+			time.sleep(1.5)
+	outfile.close()
 
 if __name__ == '__main__':
 	main()
+	
